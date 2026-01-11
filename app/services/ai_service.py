@@ -46,7 +46,9 @@ Summary:"""
                     {
                         "role": "system",
                         "content": "You are a professional book reviewer and summarizer. "
-                        "Create engaging, accurate, and concise summaries.",
+                        "Create engaging, accurate, and concise summaries. "
+                        "Return ONLY the summary text itself. Do not include any introductory phrases like "
+                        "'Here is the summary' or 'Summary:' in your response.",
                     },
                     {"role": "user", "content": prompt},
                 ],

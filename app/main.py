@@ -1,13 +1,21 @@
 """Main FastAPI application."""
 
+import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.api.endpoints import auth, books, ai
 from app.services.cache_service import cache_service
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -19,11 +27,13 @@ async def lifespan(app: FastAPI):
         app: FastAPI application instance
     """
     await cache_service.connect()
+    logger.info("Connected to cache service")
 
     yield
 
     # Shutdown
     await cache_service.disconnect()
+    logger.info("Disconnected from cache service")
 
 
 # Create FastAPI app
@@ -85,7 +95,7 @@ app.include_router(ai.router)
 
 # Global exception handler
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
+async def global_exception_handler(request: Request, exc: Exception):
     """
     Global exception handler for unhandled exceptions.
 
@@ -96,6 +106,12 @@ async def global_exception_handler(request, exc):
     Returns:
         JSON error response
     """
+    logger.error(
+        f"Unhandled exception: {str(exc)}",
+        exc_info=True,
+        extra={"path": request.url.path, "method": request.method},
+    )
+
     return JSONResponse(
         status_code=500,
         content={

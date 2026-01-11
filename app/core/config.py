@@ -1,6 +1,6 @@
 """Application configuration management using Pydantic settings."""
 from typing import List
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -19,6 +19,15 @@ class Settings(BaseSettings):
 
     # Database Configuration
     DATABASE_URL: str
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def validate_database_url(cls, database_url: str) -> str:
+        """Ensure database URL uses asyncpg driver."""
+        if database_url and database_url.startswith("postgresql://") and "+asyncpg" not in database_url:
+            return database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return database_url
+
     DB_HOST: str
     DB_PORT: int
     DB_NAME: str
